@@ -55,60 +55,54 @@ foreach ($arr as $ch) {
     <!-- Height dropdown selector, default value is 10 -->
     <label for="height">Grid Height:</label>
     <select name="height" id="height" autocomplete="off">
-        <option value="10" selected>10</option>
-        <option value="11">11</option>
-        <option value="12">12</option>
-        <option value="13">13</option>
-        <option value="14">14</option>
-        <option value="15">15</option>
-        <option value="16">16</option>
-        <option value="17">17</option>
-        <option value="18">18</option>
-        <option value="19">19</option>
-        <option value="20">20</option>
-        <option value="21">21</option>
-        <option value="22">22</option>
-        <option value="23">23</option>
-        <option value="24">24</option>
-        <option value="25">25</option>
+        <?php
+        if (isset($_POST['height'])) {
+			$height = $_POST['height'];
+		} else {
+            // if no posted preference for height, default value is 12
+            $height = "12";
+		}
+        for ($i = 10; $i <= 25; $i++) {
+            echo '<option value="' . $i . '"' . (($i == $height) ? ' selected' : '' ) .'>' . $i . '</option>';
+        }
+        ?>
     </select>
     <br><br>
 
     <!-- Width dropdown selector, default value is 10 -->
     <label for="width">Grid Width:</label>
     <select name="width" id="width" autocomplete="off">
-        <option value="10" selected>10</option>
-        <option value="11">11</option>
-        <option value="12">12</option>
-        <option value="13">13</option>
-        <option value="14">14</option>
-        <option value="15">15</option>
-        <option value="16">16</option>
-        <option value="17">17</option>
-        <option value="18">18</option>
-        <option value="19">19</option>
-        <option value="20">20</option>
-        <option value="21">21</option>
-        <option value="22">22</option>
-        <option value="23">23</option>
-        <option value="24">24</option>
-        <option value="25">25</option>
+        <?php
+        if (isset($_POST['width'])) {
+			$width = $_POST['width'];
+		} else {
+            // if no posted preference for width, default value is 16
+            $width = "16";
+		}
+        for ($i = 10; $i <= 25; $i++) {
+            echo '<option value="' . $i . '"' . (($i == $width) ? ' selected' : '' ) .'>' . $i . '</option>';
+        }
+        ?>
     </select>
     <br><br>
+
+    <label for="show_solution">Hide Solution on Generate:</label>
+	<input type="checkbox" id='hide_solution' name="hide_solution" value="true" <?php if (isset($_POST['hide_solution']) && $_POST['hide_solution'] == 'true') echo "checked"; ?>>
+	<br><br>
 
     <input type="submit" name="generate" id="generate" value="Generate" id="generate">
     <br><br>
 
     <table id="game"></table>
 	<br>
+    <table id="solution"></table>
+    <br>
 	<button type="button" id="toggleSolution" name="toggleSolution">Show Solution</button>
-	<br><br>
-	<table id="solution"></table>
 
     <!-- show grids on startup -->
     <script>
-        gen();
-        document.getElementById("toggleSolution").addEventListener("click", toggleSolution);
+        gen(<?php echo ((isset($_POST['hide_solution']) && $_POST['hide_solution'] == 'true') ? "true" : "false"); ?>);
+        document.getElementById("toggleSolution").addEventListener("click", function() { toggleSolution(false); });
     </script>
 </form>
 <?php
