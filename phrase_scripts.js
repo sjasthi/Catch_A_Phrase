@@ -14,40 +14,40 @@
   * 
   * @param {boolean} starting Whether this function is being called when the page starts or not.
   */
-function gen(starting) {
+function gen() {
     // pull height and width from dropdowns
     var height = document.getElementById("height").value;
     var width = document.getElementById("width").value;
 
-    // if gen has already been called, remove the grids so that they can be generated again
-    if (!starting) {
-        document.body.removeChild(document.getElementById("game"));
-        document.body.removeChild(document.getElementById("solution"));
-        document.body.removeChild(document.getElementById("linebreak"));
-    }
+    // get parent element of grids
+    var gridParent = document.getElementById("catch_a_phrase_form");
 
+    // get game grid
+    var gameGrid = document.getElementById("game");
     // create game grid
-    var gameGrid = document.createElement("TABLE");
-    document.body.appendChild(gameGrid);
-    gameGrid.id = "game";
-    generateGrid(height, width, gameGrid);
+    var newGameGrid = document.createElement("TABLE");
+    newGameGrid.id = "game";
+    // replace old game grid with new
+    gridParent.replaceChild(newGameGrid, gameGrid);
+    // generate grid tr and tds
+    generateGrid(height, width, newGameGrid);
 
-    // space between grids
-    var linebreak = document.createElement("BR");
-    document.body.appendChild(linebreak);
-    linebreak.id = "linebreak"
-
+    // get solution grid
+    var solutionGrid = document.getElementById("solution");
     // create solution grid
-    var solutionGrid = document.createElement("TABLE");
-    document.body.appendChild(solutionGrid);
-    solutionGrid.id = "solution";
-    generateGrid(height, width, solutionGrid);
+    var newSolutionGrid = document.createElement("TABLE");
+    newSolutionGrid.id = "solution";
+    // replace old solution grid with new
+    gridParent.replaceChild(newSolutionGrid, solutionGrid);
+    // generate grid tr and tds
+    generateGrid(height, width, newSolutionGrid);
+    newSolutionGrid.style.display = "none"; // hide solution grid
 
     // get phrase and fillers and parse into arrays
-    var phraseChars = parseInputString(document.getElementById("phrase").value);
+    var phraseChars = parseInputString(document.getElementById("processedPhrase").value);
     var fillers = parseInputString(document.getElementById("fillers").value);
 
-    /* hard coded values and locations for phrase
+    /* hard coded values and locations for phrase (for testing)
     var values = ["a","x","BC","U","Z","p","r","e","l","s","F","cd","y","N","g","y","TH","M","N","Bc","o","l","y","A","m","K","u","E","P","R","x","E","W","D","L","D","AB","T","O","D","cd","f","f","A","d","D","A","P","Z","F","f","X","c","S","a","LK","r","A","Z","X","X","a","h","F","B","u","O","p","I","a","a","m","B","x","y","G","i","b","Y","m","m","B","ab","a","b","c","d","e","P","I","k","B","e","r","t","h","g","f","F","O"];
     var locations = [[3,2],[4,3],[3,4],[2,5],[1,6],[2,7],[3,7],[4,6],[5,5]];
     */
@@ -57,12 +57,15 @@ function gen(starting) {
     var locations = chooseLocations(height, width, phraseChars);
 
     // place filler values into the grids
-    fillGrid(gameGrid, values);
-    fillGrid(solutionGrid, values);
+    fillGrid(newGameGrid, values);
+    fillGrid(newSolutionGrid, values);
 
     // place the phrase into the grids
-    placePhrase(locations, phraseChars, gameGrid, false);
-    placePhrase(locations, phraseChars, solutionGrid, true);
+    placePhrase(locations, phraseChars, newGameGrid, false);
+    placePhrase(locations, phraseChars, newSolutionGrid, true);
+
+    addLabels(height, width, newGameGrid);
+    addLabels(height, width, newSolutionGrid)
 }
 
 /**
@@ -89,10 +92,16 @@ function generateGrid(height, width, grid) {
  */
 function parseInputString(string) {
     var inputs = string.split(",");
+    var values = new Array();
+    var j = 0;
     for (var i = 0; i < inputs.length; i++) {
-        inputs[i] = inputs[i].trim();
+        input = inputs[i].trim();
+        if (input != '') {
+            values[j] = input;
+            j++;
+        }
     }
-    return inputs;
+    return values;
 }
 
 /**
@@ -107,7 +116,7 @@ function gridValues(height, width, fillers) {
     for (var i = 0; i < height; i++) {
         for (var j = 0; j < width; j++) {
             // pick a random value from the filler options for the location
-            values[i*width + j] = fillers[Math.floor(Math.random() * fillers.length)];
+            values[i * width + j] = fillers[Math.floor(Math.random() * fillers.length)];
         }
     }
     return values;
@@ -210,6 +219,12 @@ function chooseLocations(height, width, phraseChars) {
             legitimatePlacement = false;
         }
     }
+    /*
+    // adjust locations to account for labels
+    for (var j = 0; j < locations.length; i++) {
+        locations[j][0] = locations[j][0] + 1;
+        locations[j][1] = locations[j][1] + 1;
+    }*/
     return locations;
 }
 
@@ -254,7 +269,7 @@ function fillGrid(grid, values) {
     for (var i = 0; i < rows.length; i++) {
         var cells = rows[i].getElementsByTagName("TD");
         for (var j = 0; j < cells.length; j++) {
-            cells[j].innerText = values[i*(cells.length) + j];
+            cells[j].innerText = values[i * (cells.length) + j];
         }
     }
 }
@@ -276,7 +291,53 @@ function placePhrase(locations, phraseChars, grid, solution) {
 
         // if the table is the solution table, change the background color of the cells
         if (solution) {
-            rows[locations[i][0]].getElementsByTagName("TD")[locations[i][1]].style.backgroundColor = "green";
+            rows[locations[i][0]].getElementsByTagName("TD")[locations[i][1]].style.backgroundColor = "MediumSpringGreen";
         }
+    }
+}
+
+/**
+ * A function to insert and fill out the lables for the grids, with A-Z horizontal and 1-N vertical lables
+ *  based on the input width and height.
+ * @param {int} width The width of the grid to add labels to.
+ * @param {int} height The height of the grid to add labels to.
+ * @param {table} grid The grid table object.
+ */
+function addLabels(width, height, grid) {
+    horizontalLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',  'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+
+    for (var i = 0; i < width; i++) {
+        //iterate through rows
+        var newCell = grid.rows[i].insertCell(0);
+        newCell.innerText = i + 1;
+        newCell.style.fontWeight = 'bold';
+    }
+
+    var newRow = grid.insertRow(0);
+    for (var j = 0; j < height; j++) {
+        var newCell = newRow.insertCell(0);
+        newCell.innerText = horizontalLabels[height - j - 1];
+        newCell.style.fontWeight = 'bold';
+    }
+    var emptyCell = newRow.insertCell(0);
+    emptyCell.id = 'emptyCell';
+}
+
+/**
+ * A function to toggle showing the solution grid. Also changes the toggle button from 'Show' to 'Hide' 
+ *  solution and vice versa.
+ */
+function toggleSolution() {
+    var solutionGrid = document.getElementById("solution");
+    if (solutionGrid.style.display === "none") {
+        solutionGrid.style.display = "block"; // show solution grid
+
+        var toggleButton = document.getElementById("toggleSolution");
+        toggleButton.innerText = "Hide Solution";
+    } else {
+        solutionGrid.style.display = "none"; // hide solution grid
+
+        var toggleButton = document.getElementById("toggleSolution");
+        toggleButton.innerText = "Show Solution";
     }
 }
